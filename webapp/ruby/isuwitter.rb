@@ -30,7 +30,29 @@ module Isuwitter
         if until_time
           db.xquery(%| SELECT * FROM tweets WHERE created_at < ? ORDER BY created_at DESC |, until_time)
         else
-          db.query(%| SELECT * FROM tweets ORDER BY created_at DESC |)
+          db.xquery(%| SELECT * FROM tweets ORDER BY created_at DESC |)
+        end
+      end
+
+      def get_friend_tweets until_time, friend_ids
+
+        if until_time
+          db.xquery(%|
+            SELECT * 
+            FROM tweets 
+            WHERE created_at < ? 
+            AND user_id IN (?)
+            ORDER BY created_at DESC 
+            LIMIT 50 |,
+          until_time, friend_ids.map(&:to_i))
+        else
+          db.xquery(%|
+            SELECT *
+            FROM tweets
+            WHERE user_id IN (?)
+            ORDER BY created_at DESC 
+            LIMIT 50 |,
+          friend_ids.map(&:to_i))
         end
       end
 
@@ -74,16 +96,22 @@ module Isuwitter
         http.request req
       end
       friends = JSON.parse(res.body)['friends']
-
-      friends_name = {}
       @tweets = []
-      get_all_tweets(params[:until]).each do |row|
-        row['html'] = htmlify row['text']
-        row['time'] = row['created_at'].strftime '%F %T'
-        friends_name[row['user_id']] ||= get_user_name row['user_id']
-        row['name'] = friends_name[row['user_id']]
-        @tweets.push row if friends.include? row['name']
-        break if @tweets.length == PERPAGE
+      if friends
+        friend_user_ids = db.xquery(%|
+          SELECT id
+          FROM users
+          WHERE name IN (#{friends.map {|name| "'#{name}'" }.join(',')})
+        |).map{|user| user['id']}
+
+        friends_name = {}
+        get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
+          row['html'] = htmlify row['text']
+          row['time'] = row['created_at'].strftime '%F %T'
+          friends_name[row['user_id']] ||= get_user_name row['user_id']
+          row['name'] = friends_name[row['user_id']]
+          @tweets.push row
+        end
       end
 
       if params[:append]
@@ -109,8 +137,8 @@ module Isuwitter
     end
 
     get '/initialize' do
-      db.query(%| DELETE FROM tweets WHERE id > 100000 |)
-      db.query(%| DELETE FROM users WHERE id > 1000 |)
+      db.xquery(%| DELETE FROM tweets WHERE id > 100000 |)
+      db.xquery(%| DELETE FROM users WHERE id > 1000 |)
       ok = system("mysql -u root -D isuwitter < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
 
