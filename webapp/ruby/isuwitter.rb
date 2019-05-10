@@ -35,13 +35,6 @@ module Isuwitter
       end
 
       def get_friend_tweets until_time, friend_ids
-        p %|
-          SELECT * 
-          FROM tweets 
-          WHERE created_at < ? 
-          AND user_id IN (#{friend_ids.map(&:to_i).join(',')})
-          ORDER BY created_at DESC 
-          LIMIT 50 |
 
         if until_time
           db.xquery(%|
@@ -56,7 +49,7 @@ module Isuwitter
           db.xquery(%|
             SELECT *
             FROM tweets
-            AND user_id IN (?)
+            WHERE user_id IN (?)
             ORDER BY created_at DESC 
             LIMIT 50 |,
           friend_ids.map(&:to_i))
