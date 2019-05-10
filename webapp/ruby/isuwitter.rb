@@ -98,7 +98,7 @@ module Isuwitter
 
       friends_name = {}
       @tweets = []
-      get_friend_tweets(params[:until], friends.split(',').map(&:to_i)).each do |row|
+      get_friend_tweets(params[:until], friends.map(&:to_i)).each do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
         friends_name[row['user_id']] ||= get_user_name row['user_id']
