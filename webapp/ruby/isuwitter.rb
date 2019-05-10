@@ -5,6 +5,7 @@ require 'net/http'
 require 'sinatra/base'
 require 'sinatra/json'
 require 'mysql2-cs-bind'
+require 'erubis'
 
 module Isuwitter
   class WebApp < Sinatra::Base
@@ -57,17 +58,11 @@ module Isuwitter
       end
 
       def get_user_id name
-        return nil if name.nil?
-
-        user = db.xquery(%| SELECT * FROM users WHERE name = ? |, name).first
-        user ? user['id'] : nil
+        user_name_to_id[name]
       end
 
       def get_user_name id
-        return nil if id.nil?
-
-        user = db.xquery(%| SELECT * FROM users WHERE id = ? |, id).first
-        user['name']
+        user_id_to_name[id]
       end
 
       def htmlify text
@@ -94,6 +89,29 @@ module Isuwitter
         end
         @user_id_to_name
       end
+
+      def user_name_to_id
+        return @user_name_to_id if @user_name_to_id
+        @user_name_to_id = user_id_to_name.map {|k,v| [v,k]}.to_h
+      end
+
+      def get_friends user
+        friends = db.xquery(%| SELECT * FROM friends WHERE me = ? |, user).first
+        return nil unless friends
+        friends['friends'].split(',')
+      end
+
+      def render_tweets(tweets)
+        tweets.map do |tweet|
+          <<~TEXT
+            <div class="tweet" data-time="#{tweet['time']}">
+              <p><a href="/#{tweet['name']}" class="tweet-user-name">#{tweet['name']}</a></p>
+              <p>#{tweet['html']}</p>
+              <p class="time">#{tweet['time']}</p>
+            </div>
+          TEXT
+        end.join("\n")
+      end
     end
 
     get '/' do
@@ -104,20 +122,10 @@ module Isuwitter
         return erb :index, layout: :layout
       end
 
-      url = URI.parse "#{ISUTOMO_ENDPOINT}/#{@name}"
-      req = Net::HTTP::Get.new url.path
-      res = Net::HTTP.start(url.host, url.port) do |http|
-        http.request req
-      end
-      friends = JSON.parse(res.body)['friends']
+      friends = get_friends(@name)
       @tweets = []
       if friends
-        friend_user_ids = db.xquery(%|
-          SELECT id
-          FROM users
-          WHERE name IN (#{friends.map {|name| "'#{name}'" }.join(',')})
-        |).map{|user| user['id']}
-
+        friend_user_ids = friends.map {|friend_name| user_name_to_id[friend_name] }
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
           row['html'] = htmlify row['text']
           row['time'] = row['created_at'].strftime '%F %T'
@@ -127,9 +135,8 @@ module Isuwitter
       end
 
       if params[:append]
-        erb :_tweets, layout: false
+        render_tweets(@tweets)
       else
-
         erb :index, layout: :layout
       end
     end
@@ -152,6 +159,7 @@ module Isuwitter
       db.xquery(%| DELETE FROM tweets WHERE id > 100000 |)
       db.xquery(%| DELETE FROM users WHERE id > 1000 |)
       ok = system("mysql -u root -D isuwitter < #{Dir.pwd}/../sql/seed_isutomo.sql")
+      ok = system("mysql -u root -D isutomo < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
 
       res = { result: 'OK' }
@@ -223,15 +231,12 @@ module Isuwitter
       @query = params[:q]
       @query = "##{params[:tag]}" if params[:tag]
 
-      friends_name = {}
       @tweets = []
       get_all_tweets(params[:until],@query).each do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
-        friends_name[row['user_id']] ||= get_user_name row['user_id']
-        row['name'] = friends_name[row['user_id']]
+        row['name'] = user_id_to_name[row['user_id']]
         @tweets.push row
-        # break if @tweets.length == PERPAGE
       end
 
       if params[:append]
@@ -270,11 +275,11 @@ module Isuwitter
 
       if params[:until]
         rows = db.xquery(%|
-          SELECT * FROM tweets WHERE user_id = ? AND created_at < ? ORDER BY created_at DESC
+          SELECT * FROM tweets WHERE user_id = ? AND created_at < ? ORDER BY created_at DESC LIMIT 50
         |, user_id, params[:until])
       else
         rows = db.xquery(%|
-          SELECT * FROM tweets WHERE user_id = ? ORDER BY created_at DESC
+          SELECT * FROM tweets WHERE user_id = ? ORDER BY created_at DESC LIMIT 50
         |, user_id)
       end
 
@@ -284,7 +289,6 @@ module Isuwitter
         row['time'] = row['created_at'].strftime '%F %T'
         row['name'] = @user
         @tweets.push row
-        break if @tweets.length == PERPAGE
       end
 
       if params[:append]
