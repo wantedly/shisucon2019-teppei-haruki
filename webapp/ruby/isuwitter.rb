@@ -94,6 +94,12 @@ module Isuwitter
         end
         @user_id_to_name
       end
+
+      def get_friends user
+        friends = db.xquery(%| SELECT * FROM friends WHERE me = ? |, user).first
+        return nil unless friends
+        friends['friends'].split(',')
+      end
     end
 
     get '/' do
@@ -104,12 +110,7 @@ module Isuwitter
         return erb :index, layout: :layout
       end
 
-      url = URI.parse "#{ISUTOMO_ENDPOINT}/#{@name}"
-      req = Net::HTTP::Get.new url.path
-      res = Net::HTTP.start(url.host, url.port) do |http|
-        http.request req
-      end
-      friends = JSON.parse(res.body)['friends']
+      friends = get_friends(@name)
       @tweets = []
       if friends
         friend_user_ids = db.xquery(%|
@@ -152,6 +153,7 @@ module Isuwitter
       db.xquery(%| DELETE FROM tweets WHERE id > 100000 |)
       db.xquery(%| DELETE FROM users WHERE id > 1000 |)
       ok = system("mysql -u root -D isuwitter < #{Dir.pwd}/../sql/seed_isutomo.sql")
+      ok = system("mysql -u root -D isutomo < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
 
       res = { result: 'OK' }
