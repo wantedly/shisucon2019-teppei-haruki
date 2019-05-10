@@ -40,18 +40,17 @@ module Isuwitter
             SELECT * 
             FROM tweets 
             WHERE created_at < ? 
-            AND user_id IN (?)
+            AND user_id IN (#{friend_ids.map(&:to_i).join(',')})
             ORDER BY created_at DESC 
             LIMIT 50 |,
-          until_time, friend_ids)
+          until_time)
         else
           db.xquery(%|
             SELECT *
             FROM tweets
-            AND user_id IN (?)
+            AND user_id IN (#{friend_ids.map(&:to_i).join(',')})
             ORDER BY created_at DESC 
-            LIMIT 50 |,
-          friend_ids)
+            LIMIT 50 |)
         end
       end
 
