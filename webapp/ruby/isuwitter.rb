@@ -98,6 +98,18 @@ module Isuwitter
         return nil unless friends
         friends['friends'].split(',')
       end
+
+      def render_tweets(tweets)
+        tweets.map do |tweet|
+          <<~TEXT
+            <div class="tweet" data-time="#{tweet['time']}">
+              <p><a href="/#{tweet['name']}" class="tweet-user-name">#{tweet['name']}</a></p>
+              <p>#{tweet['html']}</p>
+              <p class="time">#{tweet['time']}</p>
+            </div>
+          TEXT
+        end.join("\n")
+      end
     end
 
     get '/' do
@@ -126,9 +138,8 @@ module Isuwitter
       end
 
       if params[:append]
-        erb :_tweets, layout: false
+        render_tweets(@tweets)
       else
-
         erb :index, layout: :layout
       end
     end
