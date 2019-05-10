@@ -50,9 +50,9 @@ module Isuwitter
 
       def initialize_tweets_user_name
         # initializeが終わらなかったらまた考える
+        users = db.xquery(%| SELECT name FROM users|)
         db.xquery(%| SELECT * FROM tweets |).each do |tweet|
-          user = db.xquery(%| SELECT name FROM users WHERE id = ? |, tweet['user_id']).first
-          db.xquery(%| UPDATE tweets SET user_name = ? WHERE user_id = ? |, user['name'], tweet['user_id'])
+          db.xquery(%| UPDATE tweets SET user_name = ? WHERE user_id = ? |, users.find { |user| user['name']}, tweet['user_id'])
         end
       end
 
