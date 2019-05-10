@@ -80,6 +80,20 @@ module Isuwitter
           .gsub('"', '&quot;')
           .gsub(/#(\S+)(\s|$)/, '<a class="hashtag" href="/hashtag/\1">#\1</a>\2')
       end
+
+      def user_id_to_name
+        return @user_id_to_name if @user_id_to_name
+        users = db.xquery(%|
+          SELECT id,name
+          FROM users
+        |)
+
+        @user_id_to_name = {}
+        users.each do |user|
+          @user_id_to_name[user['id'].to_i] = user['name']
+        end
+        @user_id_to_name
+      end
     end
 
     get '/' do
@@ -104,12 +118,10 @@ module Isuwitter
           WHERE name IN (#{friends.map {|name| "'#{name}'" }.join(',')})
         |).map{|user| user['id']}
 
-        friends_name = {}
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
           row['html'] = htmlify row['text']
           row['time'] = row['created_at'].strftime '%F %T'
-          friends_name[row['user_id']] ||= get_user_name row['user_id']
-          row['name'] = friends_name[row['user_id']]
+          row['name'] = user_id_to_name[row['user_id']]
           @tweets.push row
         end
       end
