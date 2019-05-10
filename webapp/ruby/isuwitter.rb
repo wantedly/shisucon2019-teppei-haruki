@@ -5,6 +5,7 @@ require 'net/http'
 require 'sinatra/base'
 require 'sinatra/json'
 require 'mysql2-cs-bind'
+require './redis_client'
 
 module Isuwitter
   class WebApp < Sinatra::Base
