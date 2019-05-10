@@ -58,6 +58,12 @@ module Isuwitter
           .gsub('"', '&quot;')
           .gsub(/#(\S+)(\s|$)/, '<a class="hashtag" href="/hashtag/\1">#\1</a>\2')
       end
+
+      def get_friends user
+        friends = db.xquery(%| SELECT * FROM friends WHERE me = ? |, user).first
+        return nil unless friends
+        friends['friends'].split(',')
+      end
     end
 
     get '/' do
@@ -68,12 +74,7 @@ module Isuwitter
         return erb :index, layout: :layout
       end
 
-      url = URI.parse "#{ISUTOMO_ENDPOINT}/#{@name}"
-      req = Net::HTTP::Get.new url.path
-      res = Net::HTTP.start(url.host, url.port) do |http|
-        http.request req
-      end
-      friends = JSON.parse(res.body)['friends']
+      friends = get_friends(@name)
 
       friends_name = {}
       @tweets = []
