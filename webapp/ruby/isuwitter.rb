@@ -98,8 +98,8 @@ module Isuwitter
       friend_user_ids = db.xquery(%|
         SELECT id
         FROM users
-        WHERE name IN (?)
-      |, friends).map {|user| user['id']}
+        WHERE name IN (#{friends.map {|user| user['id'].map(&:to_i).join(',')}})
+      |)
 
       friends_name = {}
       @tweets = []
