@@ -34,6 +34,27 @@ module Isuwitter
         end
       end
 
+      def get_friend_tweets until_time, friend_ids
+        if until_time
+          db.xquery(%|
+            SELECT * 
+            FROM tweets 
+            WHERE created_at < ? 
+            AND user_id IN (?)
+            ORDER BY created_at DESC 
+            LIMIT 50 |,
+          until_time, friend_ids)
+        else
+          db.query(%|
+            SELECT *
+            FROM tweets
+            AND user_id IN (?)
+            ORDER BY created_at DESC 
+            LIMIT 50 |,
+          friend_ids)
+        end
+      end
+
       def get_user_id name
         return nil if name.nil?
 
@@ -77,13 +98,12 @@ module Isuwitter
 
       friends_name = {}
       @tweets = []
-      get_all_tweets(params[:until]).each do |row|
+      get_friend_tweets(params[:until], friends.split(',').map(&:to_i)).each do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
         friends_name[row['user_id']] ||= get_user_name row['user_id']
         row['name'] = friends_name[row['user_id']]
-        @tweets.push row if friends.include? row['name']
-        break if @tweets.length == PERPAGE
+        @tweets.push row
       end
 
       if params[:append]
