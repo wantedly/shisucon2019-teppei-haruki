@@ -35,8 +35,7 @@ module Isuwitter
       end
 
       def get_friend_tweets until_time, friend_ids
-        if until_time
-          p %|
+        p %|
           SELECT * 
           FROM tweets 
           WHERE created_at < ? 
@@ -44,6 +43,7 @@ module Isuwitter
           ORDER BY created_at DESC 
           LIMIT 50 |
 
+        if until_time
           db.xquery(%|
             SELECT * 
             FROM tweets 
