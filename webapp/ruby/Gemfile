@@ -5,3 +5,5 @@ gem 'mysql2-cs-bind'
 gem 'unicorn'
 gem 'json'
 gem 'pry-byebug'
+gem 'erubis'
+
