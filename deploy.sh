@@ -10,3 +10,5 @@ sudo systemctl status mariadb.service
 
 sudo systemctl restart isucon-ruby-isuwitter.service
 sudo systemctl status isucon-ruby-isuwitter.service
+sudo systemctl restart isucon-ruby-isutomo.service
+sudo systemctl status isucon-ruby-isutomo.service
