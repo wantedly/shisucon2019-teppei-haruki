@@ -1,0 +1,16 @@
+<% if @name %>
+  <%= erb :_post, layout: false %>
+  <div class="timeline">
+    <%= erb :_tweets, layout: false %>
+  </div>
+  <button class="readmore">さらに読み込む</button>
+<% else %>
+<% if @flush %>
+<p class="flush"><%= @flush %></p>
+<% end %>
+<form class="login" action="/login" method="post">
+  <input type="text" name="name">
+  <input type="password" name="password">
+  <button type="submit">ログイン</button>
+</from>
+<% end %>

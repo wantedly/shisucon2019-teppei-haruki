@@ -1,0 +1,7 @@
+<% @tweets.each do |tweet| %>
+  <div class="tweet" data-time="<%= tweet['time'] %>">
+    <p><a href="/<%= tweet['name'] %>" class="tweet-user-name"><%= tweet['name'] %></a></p>
+    <p><%= tweet['html'] %></p>
+    <p class="time"><%= tweet['time'] %></p>
+  </div>
+<% end %>

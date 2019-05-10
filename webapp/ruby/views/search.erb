@@ -1,0 +1,10 @@
+<% if @name %>
+  <%= erb :_post, layout: false %>
+<% end %>
+
+<h3><%= @query %> に関するツイート</h3>
+
+<div class="timeline">
+  <%= erb :_tweets, layout: false %>
+</div>
+<button class="readmore">さらに読み込む</button>
