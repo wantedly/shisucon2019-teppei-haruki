@@ -65,10 +65,7 @@ module Isuwitter
       end
 
       def get_user_name id
-        return nil if id.nil?
-
-        user = db.xquery(%| SELECT * FROM users WHERE id = ? |, id).first
-        user['name']
+        user_id_to_name[id]
       end
 
       def htmlify text
