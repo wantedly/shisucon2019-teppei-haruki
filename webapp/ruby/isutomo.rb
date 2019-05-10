@@ -13,7 +13,7 @@ module Isutomo
           port: ENV['YJ_ISUCON_DB_PORT'] ? ENV['YJ_ISUCON_DB_PORT'].to_i : 3306,
           username: ENV['YJ_ISUCON_DB_USER'] || 'root',
           password: ENV['YJ_ISUCON_DB_PASSWORD'],
-          database: ENV['YJ_ISUCON_DB_NAME'] || 'isutomo',
+          database: 'isuwitter',
           reconnect: true,
         )
       end
