@@ -7,6 +7,8 @@ require 'sinatra/json'
 require 'mysql2-cs-bind'
 require 'erubis'
 
+require './redis_client'
+
 module Isuwitter
   class WebApp < Sinatra::Base
     use Rack::Session::Cookie, key: 'isu_session', secret: 'kioicho'
