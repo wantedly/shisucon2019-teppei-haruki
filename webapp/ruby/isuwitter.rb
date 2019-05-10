@@ -100,7 +100,7 @@ module Isuwitter
         friend_user_ids = db.xquery(%|
           SELECT id
           FROM users
-          WHERE name IN (#{friends.map {|name| "'#{name}''" }.join(',')})
+          WHERE name IN (#{friends.map {|name| "'#{name}'" }.join(',')})
         |)
 
         friends_name = {}
