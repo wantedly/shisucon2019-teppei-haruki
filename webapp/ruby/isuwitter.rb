@@ -223,15 +223,10 @@ module Isuwitter
       @query = params[:q]
       @query = "##{params[:tag]}" if params[:tag]
 
-      friends_name = {}
-      @tweets = []
-      get_all_tweets(params[:until],@query).each do |row|
+      @tweets = get_all_tweets(params[:until],@query).map do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
-        friends_name[row['user_id']] ||= get_user_name row['user_id']
-        row['name'] = friends_name[row['user_id']]
-        @tweets.push row
-        # break if @tweets.length == PERPAGE
+        row['name'] = user_id_to_name[row['user_id']]
       end
 
       if params[:append]
