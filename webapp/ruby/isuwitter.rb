@@ -58,10 +58,7 @@ module Isuwitter
       end
 
       def get_user_id name
-        return nil if name.nil?
-
-        user = db.xquery(%| SELECT * FROM users WHERE name = ? |, name).first
-        user ? user['id'] : nil
+        user_name_to_id[name]
       end
 
       def get_user_name id
