@@ -30,7 +30,7 @@ module Isuwitter
         if until_time
           db.xquery(%| SELECT * FROM tweets WHERE created_at < ? ORDER BY created_at DESC |, until_time)
         else
-          db.query(%| SELECT * FROM tweets ORDER BY created_at DESC |)
+          db.xquery(%| SELECT * FROM tweets ORDER BY created_at DESC |)
         end
       end
 
@@ -45,7 +45,7 @@ module Isuwitter
             LIMIT 50 |,
           until_time, friend_ids)
         else
-          db.query(%|
+          db.xquery(%|
             SELECT *
             FROM tweets
             AND user_id IN (?)
@@ -129,8 +129,8 @@ module Isuwitter
     end
 
     get '/initialize' do
-      db.query(%| DELETE FROM tweets WHERE id > 100000 |)
-      db.query(%| DELETE FROM users WHERE id > 1000 |)
+      db.xquery(%| DELETE FROM tweets WHERE id > 100000 |)
+      db.xquery(%| DELETE FROM users WHERE id > 1000 |)
       ok = system("mysql -u root -D isuwitter < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
 
