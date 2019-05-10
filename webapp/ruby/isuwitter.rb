@@ -48,6 +48,14 @@ module Isuwitter
         user['name']
       end
 
+      def initialize_tweets_user_name
+        # initializeが終わらなかったらまた考える
+        db.query(%| SELECT * FROM tweets |).each do |tweet|
+          user = db.query(%| SELECT name FROM users WHERE id = ? |, tweet['user_id'])
+          db.query(%| UPDATE tweets SET user_name = ? WHERE user_id = ? |, user['name'], tweet['user_id'])
+        end
+      end
+
       def htmlify text
         text ||= ''
         text
@@ -111,7 +119,10 @@ module Isuwitter
     get '/initialize' do
       db.query(%| DELETE FROM tweets WHERE id > 100000 |)
       db.query(%| DELETE FROM users WHERE id > 1000 |)
+      ok = system("mysql -u root -D isutomo < #{Dir.pwd}/../sql/seed_isutomo.sql")
       ok = system("mysql -u root -D isuwitter < #{Dir.pwd}/../sql/seed_isutomo.sql")
+      initialize_tweets_user_name
+
       halt 500, 'error' unless ok
 
       res = { result: 'OK' }
