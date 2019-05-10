@@ -223,10 +223,12 @@ module Isuwitter
       @query = params[:q]
       @query = "##{params[:tag]}" if params[:tag]
 
-      @tweets = get_all_tweets(params[:until],@query).map do |row|
+      @tweets = []
+      get_all_tweets(params[:until],@query).each do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
         row['name'] = user_id_to_name[row['user_id']]
+        @tweets.push row
       end
 
       if params[:append]
