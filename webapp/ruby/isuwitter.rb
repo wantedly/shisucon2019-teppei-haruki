@@ -113,6 +113,7 @@ module Isuwitter
       db.query(%| DELETE FROM tweets WHERE id > 100000 |)
       db.query(%| DELETE FROM users WHERE id > 1000 |)
       ok = system("mysql -u root -D isuwitter < #{Dir.pwd}/../sql/seed_isutomo.sql")
+      ok = system("mysql -u root -D isutomo < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
 
       res = { result: 'OK' }
