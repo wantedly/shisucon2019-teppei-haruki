@@ -26,11 +26,33 @@ module Isuwitter
         )
       end
 
-      def get_all_tweets until_time
+      def get_all_tweets until_time, query
         if until_time
-          db.xquery(%| SELECT * FROM tweets WHERE created_at < ? ORDER BY created_at DESC |, until_time)
+          db.xquery(%| SELECT * FROM tweets WHERE created_at < ? AND text LIKE "%#{query}%" ORDER BY created_at DESC LIMIT 50 |, until_time)
         else
-          db.query(%| SELECT * FROM tweets ORDER BY created_at DESC |)
+          db.xquery(%| SELECT * FROM tweets WHERE text LIKE "%#{query}%" ORDER BY created_at DESC LIMIT 50 |)
+        end
+      end
+
+      def get_friend_tweets until_time, friend_ids
+
+        if until_time
+          db.xquery(%|
+            SELECT * 
+            FROM tweets 
+            WHERE created_at < ? 
+            AND user_id IN (?)
+            ORDER BY created_at DESC 
+            LIMIT 50 |,
+          until_time, friend_ids.map(&:to_i))
+        else
+          db.xquery(%|
+            SELECT *
+            FROM tweets
+            WHERE user_id IN (?)
+            ORDER BY created_at DESC 
+            LIMIT 50 |,
+          friend_ids.map(&:to_i))
         end
       end
 
@@ -59,6 +81,20 @@ module Isuwitter
           .gsub(/#(\S+)(\s|$)/, '<a class="hashtag" href="/hashtag/\1">#\1</a>\2')
       end
 
+      def user_id_to_name
+        return @user_id_to_name if @user_id_to_name
+        users = db.xquery(%|
+          SELECT id,name
+          FROM users
+        |)
+
+        @user_id_to_name = {}
+        users.each do |user|
+          @user_id_to_name[user['id'].to_i] = user['name']
+        end
+        @user_id_to_name
+      end
+
       def get_friends user
         friends = db.xquery(%| SELECT * FROM friends WHERE me = ? |, user).first
         return nil unless friends
@@ -75,16 +111,20 @@ module Isuwitter
       end
 
       friends = get_friends(@name)
-
-      friends_name = {}
       @tweets = []
-      get_all_tweets(params[:until]).each do |row|
-        row['html'] = htmlify row['text']
-        row['time'] = row['created_at'].strftime '%F %T'
-        friends_name[row['user_id']] ||= get_user_name row['user_id']
-        row['name'] = friends_name[row['user_id']]
-        @tweets.push row if friends.include? row['name']
-        break if @tweets.length == PERPAGE
+      if friends
+        friend_user_ids = db.xquery(%|
+          SELECT id
+          FROM users
+          WHERE name IN (#{friends.map {|name| "'#{name}'" }.join(',')})
+        |).map{|user| user['id']}
+
+        get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
+          row['html'] = htmlify row['text']
+          row['time'] = row['created_at'].strftime '%F %T'
+          row['name'] = user_id_to_name[row['user_id']]
+          @tweets.push row
+        end
       end
 
       if params[:append]
@@ -110,8 +150,8 @@ module Isuwitter
     end
 
     get '/initialize' do
-      db.query(%| DELETE FROM tweets WHERE id > 100000 |)
-      db.query(%| DELETE FROM users WHERE id > 1000 |)
+      db.xquery(%| DELETE FROM tweets WHERE id > 100000 |)
+      db.xquery(%| DELETE FROM users WHERE id > 1000 |)
       ok = system("mysql -u root -D isuwitter < #{Dir.pwd}/../sql/seed_isutomo.sql")
       ok = system("mysql -u root -D isutomo < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
@@ -187,13 +227,13 @@ module Isuwitter
 
       friends_name = {}
       @tweets = []
-      get_all_tweets(params[:until]).each do |row|
+      get_all_tweets(params[:until],@query).each do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
         friends_name[row['user_id']] ||= get_user_name row['user_id']
         row['name'] = friends_name[row['user_id']]
-        @tweets.push row if row['text'].include? @query
-        break if @tweets.length == PERPAGE
+        @tweets.push row
+        # break if @tweets.length == PERPAGE
       end
 
       if params[:append]
