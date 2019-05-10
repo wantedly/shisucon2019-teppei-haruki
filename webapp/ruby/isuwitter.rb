@@ -101,7 +101,7 @@ module Isuwitter
           SELECT id
           FROM users
           WHERE name IN (#{friends.map {|name| "'#{name}'" }.join(',')})
-        |)
+        |).map{|user| user['id']}
 
         friends_name = {}
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
