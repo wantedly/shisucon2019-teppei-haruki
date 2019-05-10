@@ -95,20 +95,22 @@ module Isuwitter
         http.request req
       end
       friends = JSON.parse(res.body)['friends']
-      friend_user_ids = db.xquery(%|
-        SELECT id
-        FROM users
-        WHERE name IN (#{friends.map {|user| user['id'].map(&:to_i).join(',')}})
-      |)
-
-      friends_name = {}
       @tweets = []
-      get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
-        row['html'] = htmlify row['text']
-        row['time'] = row['created_at'].strftime '%F %T'
-        friends_name[row['user_id']] ||= get_user_name row['user_id']
-        row['name'] = friends_name[row['user_id']]
-        @tweets.push row
+      if friends
+        friend_user_ids = db.xquery(%|
+          SELECT id
+          FROM users
+          WHERE name IN (#{friends.map {|user| user['id'].map(&:to_i).join(',')}})
+        |)
+
+        friends_name = {}
+        get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
+          row['html'] = htmlify row['text']
+          row['time'] = row['created_at'].strftime '%F %T'
+          friends_name[row['user_id']] ||= get_user_name row['user_id']
+          row['name'] = friends_name[row['user_id']]
+          @tweets.push row
+        end
       end
 
       if params[:append]
