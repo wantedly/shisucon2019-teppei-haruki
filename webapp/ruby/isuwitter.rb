@@ -93,6 +93,11 @@ module Isuwitter
         @user_id_to_name
       end
 
+      def user_name_to_id
+        return @user_name_to_id if @user_name_to_id
+        @user_name_to_id = user_id_to_name.map {|k,v| [v,k]}.to_h
+      end
+
       def get_friends user
         friends = db.xquery(%| SELECT * FROM friends WHERE me = ? |, user).first
         return nil unless friends
@@ -123,12 +128,7 @@ module Isuwitter
       friends = get_friends(@name)
       @tweets = []
       if friends
-        friend_user_ids = db.xquery(%|
-          SELECT id
-          FROM users
-          WHERE name IN (#{friends.map {|name| "'#{name}'" }.join(',')})
-        |).map{|user| user['id']}
-
+        friend_user_ids = friends.map {|friend_name| user_name_to_id[friend_name] }
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
           row['html'] = htmlify row['text']
           row['time'] = row['created_at'].strftime '%F %T'
