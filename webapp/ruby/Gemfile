@@ -6,3 +6,6 @@ gem 'unicorn'
 gem 'json'
 gem 'redis'
 gem 'hiredis' 
+gem 'pry-byebug'
+gem 'erubis'
+
