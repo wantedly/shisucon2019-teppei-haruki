@@ -275,10 +275,12 @@ module Isuwitter
         |, user_id)
       end
 
-      @tweets = rows.map do |row|
+      @tweets = []
+      rows.each do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
         row['name'] = @user
+        @tweets.push row
       end
 
       if params[:append]
