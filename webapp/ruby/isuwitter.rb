@@ -173,7 +173,7 @@ module Isuwitter
       ok = system("mysql -u root -D isutomo < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
 
-      initialize_htmlify
+      #initialize_htmlify
 
       res = { result: 'OK' }
       json res
