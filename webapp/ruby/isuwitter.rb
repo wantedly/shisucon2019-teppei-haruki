@@ -135,7 +135,7 @@ module Isuwitter
       if friends
         friend_user_ids = friends.map {|friend_name| user_name_to_id[friend_name] }
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
-          row['html'] = htmlify row['text']
+          row['html'] = htmlify row['text'], row['id']
           row['time'] = row['created_at'].strftime '%F %T'
           row['name'] = user_id_to_name[row['user_id']]
           @tweets.push row
@@ -242,7 +242,7 @@ module Isuwitter
 
       @tweets = []
       get_all_tweets(params[:until],@query).each do |row|
-        row['html'] = htmlify row['text']
+        row['html'] = htmlify row['text'], row['id']
         row['time'] = row['created_at'].strftime '%F %T'
         row['name'] = user_id_to_name[row['user_id']]
         @tweets.push row
@@ -294,7 +294,7 @@ module Isuwitter
 
       @tweets = []
       rows.each do |row|
-        row['html'] = htmlify row['text']
+        row['html'] = htmlify row['text'], row['id']
         row['time'] = row['created_at'].strftime '%F %T'
         row['name'] = @user
         @tweets.push row
