@@ -114,8 +114,8 @@ module Isuwitter
       friends = get_friends(@name)
       @tweets = []
       if friends
-        friend_user_ids = friends.map {|friend_name| RedisClient.get_user_name_to_id(friend_name) }
-        get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
+        friend_user_ids = RedisClient.get_user_names_to_ids(friends)
+        get_friend_tweets(params[:until], friend_user_ids).each do |row|
           row['html'] = htmlify row['text']
           row['time'] = row['created_at'].strftime '%F %T'
           row['name'] = RedisClient.get_user_id_to_name(row['user_id'])

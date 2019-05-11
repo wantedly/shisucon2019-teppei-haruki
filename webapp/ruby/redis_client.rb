@@ -21,8 +21,16 @@ class RedisClient
       @@redis.get(key_user_id_to_name(user_id))
     end
 
+    def get_user_ids_to_names(user_ids)
+      @@redis.mget(user_ids.map {|id| key_user_id_to_name(id)})
+    end
+
     def get_user_name_to_id(user_name)
-      @@redis.get(key_user_name_to_id(user_name))
+      @@redis.get(key_user_name_to_id(user_name)).to_i
+    end
+
+    def get_user_names_to_ids(user_names)
+      @@redis.mget(user_names.map {|name| key_user_name_to_id(name)}).map(&:to_i)
     end
 
     private
