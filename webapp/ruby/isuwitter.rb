@@ -60,7 +60,7 @@ module Isuwitter
       end
 
       def get_user_id name
-        user_name_to_id[name]
+        RedisClient.get_user_name_to_id(name)
       end
 
       def get_user_name id
@@ -90,11 +90,6 @@ module Isuwitter
           @user_id_to_name[user['id'].to_i] = user['name']
         end
         @user_id_to_name
-      end
-
-      def user_name_to_id
-        return @user_name_to_id if @user_name_to_id
-        @user_name_to_id = user_id_to_name.map {|k,v| [v,k]}.to_h
       end
 
       def get_friends user
@@ -127,7 +122,7 @@ module Isuwitter
       friends = get_friends(@name)
       @tweets = []
       if friends
-        friend_user_ids = friends.map {|friend_name| user_name_to_id[friend_name] }
+        friend_user_ids = friends.map {|friend_name| get_user_id(friend_name) }
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
           row['html'] = htmlify row['text']
           row['time'] = row['created_at'].strftime '%F %T'
