@@ -11,6 +11,10 @@ class RedisClient
       @@redis.mset(*(user_key_pairs.flatten))
     end
 
+    def get_user_id_to_name(user_id)
+      @@redis.get(key_user_id_to_name(user_id))
+    end
+
     private
 
     def key_user_id_to_name(user_id)

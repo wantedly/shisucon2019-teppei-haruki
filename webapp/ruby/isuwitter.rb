@@ -64,7 +64,7 @@ module Isuwitter
       end
 
       def get_user_name id
-        user_id_to_name[id]
+        RedisClient.get_user_id_to_name(id)
       end
 
       def htmlify text
@@ -131,7 +131,7 @@ module Isuwitter
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
           row['html'] = htmlify row['text']
           row['time'] = row['created_at'].strftime '%F %T'
-          row['name'] = user_id_to_name[row['user_id']]
+          row['name'] = get_user_name(row['user_id'])
           @tweets.push row
         end
       end
@@ -238,7 +238,7 @@ module Isuwitter
       get_all_tweets(params[:until],@query).each do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
-        row['name'] = user_id_to_name[row['user_id']]
+        row['name'] = get_user_name(row['user_id'])
         @tweets.push row
       end
 
