@@ -59,14 +59,6 @@ module Isuwitter
         end
       end
 
-      def get_user_id name
-        RedisClient.get_user_name_to_id(name)
-      end
-
-      def get_user_name id
-        RedisClient.get_user_id_to_name(id)
-      end
-
       def htmlify text
         text ||= ''
         text
@@ -112,7 +104,7 @@ module Isuwitter
     end
 
     get '/' do
-      @name = get_user_name session[:userId]
+      @name = RedisClient.get_user_id_to_name session[:userId]
       if @name.nil?
         @flush = session[:flush]
         session.clear
@@ -122,11 +114,11 @@ module Isuwitter
       friends = get_friends(@name)
       @tweets = []
       if friends
-        friend_user_ids = friends.map {|friend_name| get_user_id(friend_name) }
+        friend_user_ids = friends.map {|friend_name| RedisClient.get_user_name_to_id(friend_name) }
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
           row['html'] = htmlify row['text']
           row['time'] = row['created_at'].strftime '%F %T'
-          row['name'] = get_user_name(row['user_id'])
+          row['name'] = RedisClient.get_user_id_to_name(row['user_id'])
           @tweets.push row
         end
       end
@@ -139,7 +131,7 @@ module Isuwitter
     end
 
     post '/' do
-      name = get_user_name session[:userId]
+      name = RedisClient.get_user_id_to_name session[:userId]
       text = params[:text]
       if name.nil? || text == ''
         redirect '/'
@@ -190,7 +182,7 @@ module Isuwitter
     end
 
     post '/follow' do
-      name = get_user_name session[:userId]
+      name = RedisClient.get_user_id_to_name session[:userId]
       if name.nil?
         redirect '/'
       end
@@ -208,7 +200,7 @@ module Isuwitter
     end
 
     post '/unfollow' do
-      name = get_user_name session[:userId]
+      name = RedisClient.get_user_id_to_name session[:userId]
       if name.nil?
         redirect '/'
       end
@@ -226,7 +218,7 @@ module Isuwitter
     end
 
     def search session, params
-      @name = get_user_name session[:userId]
+      @name = RedisClient.get_user_id_to_name session[:userId]
       @query = params[:q]
       @query = "##{params[:tag]}" if params[:tag]
 
@@ -234,7 +226,7 @@ module Isuwitter
       get_all_tweets(params[:until],@query).each do |row|
         row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
-        row['name'] = get_user_name(row['user_id'])
+        row['name'] = RedisClient.get_user_id_to_name(row['user_id'])
         @tweets.push row
       end
 
@@ -254,11 +246,11 @@ module Isuwitter
     end
 
     get '/:user' do
-      @name = get_user_name session[:userId]
+      @name = RedisClient.get_user_id_to_name session[:userId]
       @user = params[:user]
       @mypage = @name == @user
 
-      user_id = get_user_id @user
+      user_id = RedisClient.get_user_name_to_id(@user)
       halt 404, 'not found' if user_id.nil?
 
       @is_friend = false
@@ -296,6 +288,5 @@ module Isuwitter
         erb :user, layout: :layout
       end
     end
-
   end
 end
