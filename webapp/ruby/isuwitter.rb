@@ -67,15 +67,21 @@ module Isuwitter
         user_id_to_name[id]
       end
 
-      def htmlify text
-        text ||= ''
-        text
-          .gsub('&', '&amp;')
-          .gsub('<', '&lt;')
-          .gsub('>', '&gt;')
-          .gsub('\'', '&apos;')
-          .gsub('"', '&quot;')
-          .gsub(/#(\S+)(\s|$)/, '<a class="hashtag" href="/hashtag/\1">#\1</a>\2')
+      def htmlify text, id
+        htmlified = RedisClient.get_htmlify_text(id)
+        return htmlified if htmlified
+        
+        htmlified = text || ''
+        htmlified
+          .gsub!('&', '&amp;')
+          .gsub!('<', '&lt;')
+          .gsub!('>', '&gt;')
+          .gsub!('\'', '&apos;')
+          .gsub!('"', '&quot;')
+          .gsub!(/#(\S+)(\s|$)/, '<a class="hashtag" href="/hashtag/\1">#\1</a>\2')  
+
+        RedisClient.set_htmlify_text(id, htmlified)
+        htmlified
       end
 
       def user_id_to_name

@@ -30,6 +30,14 @@ class RedisClient
       @@redis.mset(*(htmlified_pairs.flatten))
     end
 
+    def get_htmlify_text(tweet_id)
+      @@redis.get(key_htmlify_text(tweet_id))
+    end
+
+    def set_htmlify_text(tweet_id, htmlified)
+      @@redis.set(key_htmlify_text(tweet_id), htmlified)
+    end
+
     private
 
     def key_htmlify_text(tweet_id)
