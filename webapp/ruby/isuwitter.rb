@@ -33,6 +33,12 @@ module Isuwitter
         )
       end
 
+      def initialize_htmlify
+        db.xquery(%| SELECT id, text FROM tweets |).each do |tweet|
+          db.xquery(%| UPDATE tweets SET html = ? WHERE id = ? |, htmlify(tweet['text']), tweet['id'])
+        end
+      end
+
       def get_all_tweets until_time, query
         if until_time
           db.xquery(%| SELECT * FROM tweets WHERE created_at < ? AND text LIKE "%#{query}%" ORDER BY created_at DESC LIMIT 50 |, until_time)
@@ -133,7 +139,6 @@ module Isuwitter
       if friends
         friend_user_ids = friends.map {|friend_name| user_name_to_id[friend_name] }
         get_friend_tweets(params[:until], friend_user_ids.map(&:to_i)).each do |row|
-          row['html'] = htmlify row['text']
           row['time'] = row['created_at'].strftime '%F %T'
           row['name'] = user_id_to_name[row['user_id']]
           @tweets.push row
@@ -155,8 +160,8 @@ module Isuwitter
       end
 
       db.xquery(%|
-        INSERT INTO tweets (user_id, text, created_at) VALUES (?, ?, NOW())
-      |, session[:userId], text)
+        INSERT INTO tweets (user_id, text, html, created_at) VALUES (?, ?, ?, NOW())
+      |, session[:userId], text, htmlify(text))
 
       redirect '/'
     end
@@ -167,6 +172,8 @@ module Isuwitter
       ok = system("mysql -u root -D isuwitter < #{Dir.pwd}/../sql/seed_isutomo.sql")
       ok = system("mysql -u root -D isutomo < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
+
+      #initialize_htmlify
 
       res = { result: 'OK' }
       json res
@@ -239,7 +246,6 @@ module Isuwitter
 
       @tweets = []
       get_all_tweets(params[:until],@query).each do |row|
-        row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
         row['name'] = user_id_to_name[row['user_id']]
         @tweets.push row
@@ -291,7 +297,6 @@ module Isuwitter
 
       @tweets = []
       rows.each do |row|
-        row['html'] = htmlify row['text']
         row['time'] = row['created_at'].strftime '%F %T'
         row['name'] = @user
         @tweets.push row
