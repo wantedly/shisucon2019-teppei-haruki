@@ -7,11 +7,15 @@ require 'sinatra/json'
 require 'mysql2-cs-bind'
 require 'erubis'
 
+require 'rack-lineprof'
+require 'logger' # このrequire要らないかも
+
 require './redis_client'
 
 module Isuwitter
   class WebApp < Sinatra::Base
     use Rack::Session::Cookie, key: 'isu_session', secret: 'kioicho'
+    # use Rack::Lineprof, profile: 'isuwitter.rb', logger: Logger.new('/var/log/lineprof.log')
     set :public_folder, File.expand_path('../../public', __FILE__)
 
     PERPAGE = 50
