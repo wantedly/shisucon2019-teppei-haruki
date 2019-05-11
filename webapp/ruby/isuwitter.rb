@@ -83,22 +83,22 @@ module Isuwitter
       end
 
       def user_id_to_name
-        return @user_id_to_name if @user_id_to_name
+        return Thread.current[:user_id_to_name] if Thread.current[:user_id_to_name]
         users = db.xquery(%|
           SELECT id,name
           FROM users
         |)
 
-        @user_id_to_name = {}
+        Thread.current[:user_id_to_name] = {}
         users.each do |user|
-          @user_id_to_name[user['id'].to_i] = user['name']
+          Thread.current[:user_id_to_name][user['id'].to_i] = user['name']
         end
-        @user_id_to_name
+        Thread.current[:user_id_to_name]
       end
 
       def user_name_to_id
-        return @user_name_to_id if @user_name_to_id
-        @user_name_to_id = user_id_to_name.map {|k,v| [v,k]}.to_h
+        return Thread.current[:user_name_to_id] if Thread.current[:user_name_to_id]
+        Thread.current[:user_name_to_id] = user_id_to_name.map {|k,v| [v,k]}.to_h
       end
 
       def get_friends user
