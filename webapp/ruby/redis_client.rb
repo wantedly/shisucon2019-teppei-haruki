@@ -6,7 +6,7 @@ class RedisClient
   class << self
 
     def initialize_user_id_to_name(users)
-      user_key_pairs = users.map {|user| [key_user_id_to_name(user['id'], user['name'])] }
+      user_key_pairs = users.map {|user| [key_user_id_to_name(user['id']), user['name']] }
       return if user_key_pairs.empty?
       @@redis.mset(*(user_key_pairs.flatten))
     end
