@@ -160,6 +160,7 @@ module Isuwitter
       halt 500, 'error' unless ok
 
       RedisClient.initialize_user_id_to_name(db.xquery(%| SELECT id,name FROM users |))
+      RedisClient.initialize_user_name_to_id(db.xquery(%| SELECT id,name FROM users |))
       res = { result: 'OK' }
       json res
     end
