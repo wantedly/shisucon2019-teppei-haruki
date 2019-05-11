@@ -2,6 +2,7 @@ require 'sinatra/base'
 require 'sinatra/json'
 require 'mysql2-cs-bind'
 require 'json'
+require './redis_client'
 
 module Isutomo
   class WebApp < Sinatra::Base
