@@ -9,4 +9,4 @@ gem 'redis'
 gem 'hiredis' 
 gem 'pry-byebug'
 gem 'erubis'
-
+gem 'rack-lineprof', github: 'kainosnoema/rack-lineprof'
