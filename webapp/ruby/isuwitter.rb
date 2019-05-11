@@ -164,7 +164,7 @@ module Isuwitter
       ok = system("mysql -u root -D isutomo < #{Dir.pwd}/../sql/seed_isutomo.sql")
       halt 500, 'error' unless ok
 
-      RedisClient.initialize_user_id_to_name
+      RedisClient.initialize_user_id_to_name(db.xquery(%| SELECT id,name FROM users |))
       res = { result: 'OK' }
       json res
     end
